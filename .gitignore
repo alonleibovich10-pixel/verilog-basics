@@ -1,0 +1,13 @@
+# simulation artifacts
+*.out
+*.vcd
+*.vvp
+sim_*
+
+# reference solutions - local only
+SOLUTIONS.md
+
+# editors / OS
+.vscode/
+.DS_Store
+Thumbs.db
