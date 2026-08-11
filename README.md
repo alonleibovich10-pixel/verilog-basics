@@ -51,3 +51,5 @@ make adder      # a single module
 `Icarus Verilog` · `GTKWave / VCD viewer` · `make` · `Git`
 
 ![Ripple-carry adder waveform — 8-bit addition with carry propagation](rca_waveform.png)
+
+![Synchronous vs asynchronous reset](sync_vs_async_reset.png)
