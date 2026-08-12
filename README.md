@@ -79,6 +79,43 @@ make counter    # a single module
 
 `Icarus Verilog` · `VCD waveform viewer` · `make` · `Git`
 
+## Day 4 — Finite State Machines
+
+Both designs use the standard three-block FSM style: a clocked state register, a
+combinational next-state block, and a combinational output block. Every `case` has a
+`default` branch so the machine can always recover from an unreachable state.
+
+| Module | File | Description |
+|---|---|---|
+| `seq_detector_moore` | `seq_detector.v` | Detects the overlapping sequence `1011`. Moore style — output depends on state only, five states |
+| `seq_detector_mealy` | `seq_detector.v` | Same detector, Mealy style — output depends on state *and* input, four states, asserts one cycle earlier |
+| `traffic_light` | `traffic_light.v` | Parameterized four-phase intersection controller with timed transitions and a fail-safe all-red default |
+
+| Testbench | What it checks | Result |
+|---|---|---|
+| `tb_seq_detector.v` | Both FSMs run in parallel on the same bit stream, compared against a reference model that tracks the last four sampled bits. The directed stream `1011011011` must produce exactly three overlapping detections; near-misses, reset mid-sequence and 400 random bits follow | PASS |
+| `tb_traffic_light.v` | Safety invariants every cycle (lights one-hot, never two greens, one direction always red), plus phase order and duration measured across three full cycles, plus recovery from a mid-run reset | PASS |
+
+Mealy asserts one cycle before Moore — same detection, different contract:
+
 ![Mealy asserts one cycle before Moore](seq_detector.png)
 
-![Traffic light phase sequence — one direction is always red](traffic_light.png)
+Phase sequence: green → yellow → the other direction. One side is always red:
+
+![Traffic light phase sequence](traffic_light.png)
+
+### Design notes
+
+- After a failed match the detector does **not** return to the initial state — it falls
+  back to the longest suffix of what it has seen that is still a prefix of `1011`.
+  Resetting to the start would miss overlapping matches. Same reasoning as the KMP
+  failure table.
+- Moore output is glitch-free because it changes only on a clock edge, at the cost of an
+  extra state and one cycle of latency. Mealy reacts in the same cycle but puts the input
+  directly in the output path.
+- The traffic light's `default` branch drives red in both directions, so an unreachable
+  state stops the intersection rather than opening it.
+- State encoding is binary here. On an FPGA one-hot is usually preferred — flip-flops are
+  cheap, and comparing a single bit is faster than decoding a binary value.
+
+
