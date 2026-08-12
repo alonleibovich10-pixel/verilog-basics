@@ -78,3 +78,7 @@ make counter    # a single module
 ## Tools
 
 `Icarus Verilog` · `VCD waveform viewer` · `make` · `Git`
+
+![Mealy asserts one cycle before Moore](seq_detector.png)
+
+![Traffic light phase sequence — one direction is always red](traffic_light.png)
