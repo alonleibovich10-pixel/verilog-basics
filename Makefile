@@ -2,7 +2,7 @@
 #
 #   make            כל המודולים
 #   make dff        מודול בודד
-#   make wave_dff   פתיחת הגלים (VaporView: פשוט לחץ על ה-.vcd ב-Explorer)
+#   make day4       יום שלם
 #   make clean      ניקוי קבצי הרצה
 
 IV   = iverilog -g2005
@@ -34,12 +34,22 @@ counter:
 	$(IV) -o sim_counter.out counter_mod10.v tb_counter_mod10.v
 	$(VVP) sim_counter.out
 
+# ---------------- Day 4 : finite state machines ----------------
+seq:
+	$(IV) -o sim_seq.out seq_detector.v tb_seq_detector.v
+	$(VVP) sim_seq.out
+
+traffic:
+	$(IV) -o sim_traffic.out traffic_light.v tb_traffic_light.v
+	$(VVP) sim_traffic.out
+
 # ---------------- aggregates ----------------
 day2: mux4 decoder adder
 day3: dff shift counter
-all:  day2 day3
+day4: seq traffic
+all:  day2 day3 day4
 
 clean:
 	rm -f *.out *.vcd
 
-.PHONY: all day2 day3 mux4 decoder adder dff shift counter clean
+.PHONY: all day2 day3 day4 mux4 decoder adder dff shift counter seq traffic clean
