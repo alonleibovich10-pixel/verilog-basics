@@ -1,9 +1,9 @@
 # verilog-basics  -  simulation targets
 #
-#   make            כל המודולים
-#   make dff        מודול בודד
-#   make day4       יום שלם
-#   make clean      ניקוי קבצי הרצה
+#   make            everything
+#   make alu        a single module
+#   make day5       one day
+#   make clean      remove build artifacts
 
 IV   = iverilog -g2005
 VVP  = vvp
@@ -43,13 +43,24 @@ traffic:
 	$(IV) -o sim_traffic.out traffic_light.v tb_traffic_light.v
 	$(VVP) sim_traffic.out
 
+# ---------------- Day 5 : ALU and FIFO ----------------
+# alu pulls in ripple_carry_adder.v from Day 2 - it instantiates it
+alu:
+	$(IV) -o sim_alu.out alu.v ripple_carry_adder.v tb_alu.v
+	$(VVP) sim_alu.out
+
+fifo:
+	$(IV) -o sim_fifo.out sync_fifo.v tb_sync_fifo.v
+	$(VVP) sim_fifo.out
+
 # ---------------- aggregates ----------------
 day2: mux4 decoder adder
 day3: dff shift counter
 day4: seq traffic
-all:  day2 day3 day4
+day5: alu fifo
+all:  day2 day3 day4 day5
 
 clean:
 	rm -f *.out *.vcd
 
-.PHONY: all day2 day3 day4 mux4 decoder adder dff shift counter seq traffic clean
+.PHONY: all day2 day3 day4 day5 mux4 decoder adder dff shift counter seq traffic alu fifo clean

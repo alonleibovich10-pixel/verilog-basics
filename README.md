@@ -118,4 +118,43 @@ Phase sequence: green → yellow → the other direction. One side is always red
 - State encoding is binary here. On an FPGA one-hot is usually preferred — flip-flops are
   cheap, and comparing a single bit is faster than decoding a binary value.
 
+## Day 5 — ALU and Synchronous FIFO
 
+| Module | File | Description |
+|---|---|---|
+| `alu` | `alu.v` | Parameterized 8-operation ALU: ADD, SUB, AND, OR, XOR, SLT, SLL, SRL, with zero / negative / carry / signed-overflow flags |
+| `sync_fifo` | `sync_fifo.v` | Parameterized synchronous FIFO built as a circular buffer, with full / empty / count and single-cycle simultaneous read and write |
+
+### Verification
+
+| Testbench | Strategy | Cases | Result |
+|---|---|---|---|
+| `tb_alu.v` | **Exhaustive** — every operation against every possible operand pair, compared to an independent reference model | 524,288 | PASS |
+| `tb_sync_fifo.v` | Independent queue model (own array, head, tail and counter) checked every cycle, plus directed overflow / underflow / simultaneous-access scenarios and 800 cycles of random traffic | — | PASS |
+
+The ALU sweep covers the entire input space, so there is no coverage gap to argue
+about: `8 operations × 256 × 256`, no sampling and no assumptions.
+
+### Design notes
+
+- **One adder does both ADD and SUB.** Subtraction is `a + ~b + 1`; the `+1` costs
+  nothing because it rides in on the adder's existing carry-in. `b` is inverted
+  conditionally with `b ^ {N{sub_mode}}` — XOR with all-ones inverts, with all-zeros
+  passes through.
+- **Carry and overflow are different flags.** `0x7F + 0x01` produces no carry but does
+  overflow: correct as unsigned 128, wrong as signed −128. The hardware exposes both and
+  lets the software decide which one it cares about.
+- **Signed comparison is `sum[N-1] ^ overflow`.** The sign bit alone is unreliable,
+  because overflow inverts it. This is how MIPS implements `slt`, and it removes the need
+  for a separate comparator.
+- **Carry and overflow are forced low for the logic and shift operations.** The adder runs
+  in parallel regardless, but its carry-out is meaningless for AND — defined behaviour is
+  better than accidental behaviour.
+- **The FIFO pointers carry one extra bit.** Empty and full are the same pointer
+  comparison otherwise; the extra bit counts laps, so equal addresses with equal lap bits
+  means empty and equal addresses with different lap bits means full. `count` is a plain
+  subtraction — modular arithmetic handles the wraparound with no special case.
+- **Read and write are two independent `if` statements, not `if/else`.** Doing both in one
+  cycle is the normal case for a FIFO under load; using `else` would halve the throughput.
+
+![FIFO full: writes are ignored while count stays at 8](fifo_full_blocking.png)
